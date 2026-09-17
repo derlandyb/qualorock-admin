@@ -135,7 +135,13 @@ test.describe('super-admin route is unreachable for a non-super-admin session', 
     expect(response.status()).toBe(403)
   })
 
-  test('navigating to the guarded super-admin route renders the in-app forbidden message, not raw JSON', async ({ page }) => {
+  test('navigating to the guarded super-admin route renders the RequireSuperAdmin guard as Forbidden', async ({ page }) => {
+    // Mocked (deterministic, no live-backend dependency for this UI check) -
+    // the sibling test above already proves the real backend returns 403.
+    await page.route('**/api/admin/v1/super-admin/organizers', (route) =>
+      route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ state: null, rejectionReason: null }) }),
+    )
+
     await page.goto('/super-admin/organizers')
     await expect(page.getByTestId('forbidden-message')).toBeVisible()
     await expect(page.getByTestId('super-admin-organizers')).toHaveCount(0)

@@ -14,9 +14,15 @@ export function RequireSuperAdmin() {
   useEffect(() => {
     let cancelled = false
 
-    checkSuperAdminAccess().then(({ authorized }) => {
-      if (!cancelled) setStatus(authorized ? 'authorized' : 'forbidden')
-    })
+    checkSuperAdminAccess()
+      .then(({ authorized }) => {
+        if (!cancelled) setStatus(authorized ? 'authorized' : 'forbidden')
+      })
+      .catch(() => {
+        // A guard must fail closed: a network/CORS failure is not
+        // "authorized", it's "couldn't confirm authorized".
+        if (!cancelled) setStatus('forbidden')
+      })
 
     return () => {
       cancelled = true
@@ -25,9 +31,11 @@ export function RequireSuperAdmin() {
 
   if (status === 'checking') {
     return (
-      <p role="status" className="text-white">
-        Checking access...
-      </p>
+      <div className="flex min-h-screen items-center justify-center bg-qor-canvas">
+        <p role="status" className="text-white">
+          Checking access...
+        </p>
+      </div>
     )
   }
 

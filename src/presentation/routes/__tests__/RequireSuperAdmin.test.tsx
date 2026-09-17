@@ -50,4 +50,37 @@ describe('RequireSuperAdmin', () => {
     })
     expect(screen.queryByTestId('forbidden-message')).not.toBeInTheDocument()
   })
+
+  // Fail-closed: a rejected check (network/CORS failure) must not be
+  // mistaken for "authorized".
+  it('GIVEN the access check rejects WHEN the guard checks THEN it renders the in-app forbidden message, not the protected content', async () => {
+    checkSuperAdminAccessMock.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    renderGuardedRoute()
+
+    await waitFor(() => {
+      expect(screen.getByTestId('forbidden-message')).toBeInTheDocument()
+    })
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
+  })
+
+  it('GIVEN the access check has not resolved yet WHEN the guard renders THEN it shows a checking state, not the protected content or the forbidden message', async () => {
+    let resolveCheck: (value: { authorized: boolean }) => void
+    checkSuperAdminAccessMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCheck = resolve
+      }),
+    )
+
+    renderGuardedRoute()
+
+    expect(screen.getByRole('status')).toHaveTextContent(/checking access/i)
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('forbidden-message')).not.toBeInTheDocument()
+
+    resolveCheck!({ authorized: true })
+    await waitFor(() => {
+      expect(screen.getByTestId('protected-content')).toBeInTheDocument()
+    })
+  })
 })
