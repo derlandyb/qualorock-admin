@@ -18,14 +18,6 @@ export function AppShell() {
         <div className="p-4 text-white">QOR Admin</div>
       </aside>
 
-      <button
-        type="button"
-        onClick={() => setCollapsed((value) => !value)}
-        aria-label="Toggle sidebar"
-      >
-        Collapse
-      </button>
-
       <div
         data-testid="body-wrapper"
         style={{
@@ -34,6 +26,10 @@ export function AppShell() {
           transition: QOR_LAYOUT.sidebarCollapseTransition,
         }}
       >
+        <button type="button" onClick={() => setCollapsed((value) => !value)} aria-label="Toggle sidebar">
+          Collapse
+        </button>
+
         <Outlet />
       </div>
     </div>

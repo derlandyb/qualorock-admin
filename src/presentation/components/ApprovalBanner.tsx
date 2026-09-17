@@ -18,7 +18,7 @@ export function ApprovalBanner({ state, rejectionReason }: ApprovalBannerProps) 
   return (
     <div
       data-testid="approval-banner"
-      className={`rounded-md py-1 px-2 text-xs font-medium text-white ${VARIANT_CLASSES[state]}`}
+      className={`rounded-[6px] py-1 px-2 text-xs font-medium text-white ${VARIANT_CLASSES[state]}`}
     >
       {state === ORGANIZER_APPROVAL_STATE.pending
         ? 'Your account is pending Super Admin approval.'

@@ -5,7 +5,7 @@ import { ORGANIZER_APPROVAL_STATE } from '@domain/constants/adminPanelConstants'
 import { ApprovalBanner } from '@presentation/components/ApprovalBanner'
 
 const inputClassName =
-  'w-full rounded-sm border border-qor-border bg-qor-sidebar px-3 py-2 text-white'
+  'w-full rounded-[2px] border border-qor-border bg-qor-sidebar px-3 py-2 text-white'
 const labelClassName = 'text-sm font-medium text-white'
 
 export function Login() {
@@ -64,7 +64,7 @@ export function Login() {
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="rounded-md bg-qor-primary py-2 text-white disabled:opacity-50"
+          className="rounded-[6px] bg-qor-primary py-2 text-white disabled:opacity-50"
         >
           Login
         </button>
