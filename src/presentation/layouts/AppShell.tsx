@@ -20,14 +20,19 @@ export function AppShell() {
 
       <div
         data-testid="body-wrapper"
+        className="admin-body-wrapper"
         style={{
           width: collapsed ? '100%' : `calc(100% - ${QOR_LAYOUT.sidebarExpandedWidth}px)`,
           marginLeft: collapsed ? 0 : QOR_LAYOUT.sidebarExpandedWidth,
           transition: QOR_LAYOUT.sidebarCollapseTransition,
         }}
       >
-        <button type="button" onClick={() => setCollapsed((value) => !value)} aria-label="Toggle sidebar">
-          Collapse
+        <button
+          type="button"
+          onClick={() => setCollapsed((value) => !value)}
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         </button>
 
         <Outlet />

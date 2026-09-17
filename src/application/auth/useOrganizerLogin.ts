@@ -20,14 +20,20 @@ export function useOrganizerLogin() {
   async function submit(email: string, password: string): Promise<void> {
     setState({ status: 'submitting', error: null, result: null })
 
-    const response = await loginOrganizer(email, password)
+    try {
+      const response = await loginOrganizer(email, password)
 
-    if (!response.ok) {
-      setState({ status: 'error', error: response.message, result: null })
-      return
+      if (!response.ok) {
+        setState({ status: 'error', error: response.message, result: null })
+        return
+      }
+
+      setState({ status: 'success', error: null, result: response.result })
+    } catch {
+      // fetch rejects (rather than resolving with ok:false) on network
+      // failure, DNS failure, or a CORS preflight rejection.
+      setState({ status: 'error', error: 'Could not reach the server. Please try again.', result: null })
     }
-
-    setState({ status: 'success', error: null, result: response.result })
   }
 
   return { ...state, submit }

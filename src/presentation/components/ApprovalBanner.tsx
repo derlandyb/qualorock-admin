@@ -18,6 +18,7 @@ export function ApprovalBanner({ state, rejectionReason }: ApprovalBannerProps) 
   return (
     <div
       data-testid="approval-banner"
+      role="status"
       className={`rounded-[6px] py-1 px-2 text-xs font-medium text-white ${VARIANT_CLASSES[state]}`}
     >
       {state === ORGANIZER_APPROVAL_STATE.pending

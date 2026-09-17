@@ -1,5 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL
 
+if (!API_URL) {
+  // Fails fast instead of silently requesting `undefined/api/...` - a fresh
+  // clone (no .env.local) or a Docker image built without VITE_API_URL set
+  // would otherwise 404 on every request with no clear signal why.
+  throw new Error('VITE_API_URL is not set - see admin/README.md for local setup.')
+}
+
 function readCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
   return match ? decodeURIComponent(match[1]) : null
@@ -15,7 +22,7 @@ export async function ensureCsrfCookie(): Promise<void> {
 export interface ApiResponse<T> {
   ok: boolean
   status: number
-  data: T
+  data: T | null
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<ApiResponse<T>> {
@@ -36,6 +43,8 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     credentials: 'include',
   })
 
-  const data = (await response.json().catch(() => null)) as T
+  // A 204, or a non-JSON body from a proxy error page, resolves to null -
+  // callers must not assume `data` is always present.
+  const data = (await response.json().catch(() => null)) as T | null
   return { ok: response.ok, status: response.status, data }
 }

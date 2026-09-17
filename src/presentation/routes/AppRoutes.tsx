@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@presentation/layouts/AppShell'
 import { Forbidden } from '@presentation/pages/Forbidden'
 import { Login } from '@presentation/pages/Login'
@@ -15,6 +15,7 @@ export function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/forbidden" element={<Forbidden />} />
       <Route path="/" element={<AppShell />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )
 }

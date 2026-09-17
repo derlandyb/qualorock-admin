@@ -21,11 +21,12 @@ describe('ApprovalBanner', () => {
     expect(banner).toHaveTextContent('Incomplete documentation')
   })
 
-  it('GIVEN a rejected approval state with no reason WHEN the banner renders THEN it shows no extra reason text', () => {
+  it('GIVEN a rejected approval state with no reason WHEN the banner renders THEN it shows exactly the base message', () => {
     render(<ApprovalBanner state="rejected" rejectionReason={null} />)
 
     const banner = screen.getByTestId('approval-banner')
-    expect(banner.textContent).not.toContain('null')
+    expect(banner).toHaveTextContent('Your account was rejected.')
+    expect(banner.textContent).toBe('Your account was rejected.')
   })
 
   it('GIVEN an approved approval state WHEN the banner renders THEN it renders nothing', () => {

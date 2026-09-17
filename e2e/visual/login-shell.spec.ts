@@ -109,9 +109,23 @@ test.describe('admin-panel app shell', () => {
     await expect(bodyWrapper).toHaveJSProperty('style.width', 'calc(100% - 244px)')
     await page.screenshot({ path: 'screenshots/sidebar-expanded.png' })
 
-    await page.getByRole('button', { name: /toggle sidebar/i }).click()
+    await page.getByRole('button', { name: /collapse sidebar/i }).click()
     await expect(bodyWrapper).toHaveJSProperty('style.width', '100%')
     await page.screenshot({ path: 'screenshots/sidebar-collapsed.png' })
+  })
+
+  test('body wrapper does not overflow the viewport below the 992px breakpoint', async ({ page }) => {
+    // Regression check: the inline style.width assertion above can't see an
+    // overflow caused by the *other* inline style (margin-left) surviving
+    // below the breakpoint - bounding-box width against the real viewport can.
+    await page.setViewportSize({ width: 375, height: 800 })
+    await page.goto('/')
+
+    const bodyWrapper = page.getByTestId('body-wrapper')
+    const box = await bodyWrapper.boundingBox()
+    expect(box).not.toBeNull()
+    expect(box!.x).toBe(0)
+    expect(box!.width).toBeLessThanOrEqual(375)
   })
 })
 

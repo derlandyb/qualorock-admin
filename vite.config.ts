@@ -28,5 +28,10 @@ export default defineConfig({
     // Playwright's e2e specs under e2e/ have their own runner (see e2e/playwright.config.ts) —
     // Vitest's default include glob would otherwise also pick them up.
     exclude: ['e2e/**', 'node_modules/**'],
+    // Vite's "test" mode does not load .env.local, so apiClient's fail-fast
+    // check needs a value here or every test importing it would crash.
+    env: {
+      VITE_API_URL: 'http://localhost:8000',
+    },
   },
 })
