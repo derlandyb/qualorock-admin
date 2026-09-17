@@ -1,0 +1,14 @@
+{
+  "name": "admin-e2e",
+  "version": "1.0.0",
+  "description": "Playwright visual verification for the admin-panel app shell and login screen",
+  "private": true,
+  "scripts": {
+    "test": "playwright test"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

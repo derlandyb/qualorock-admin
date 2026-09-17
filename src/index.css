@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* QOR design tokens (derived from the BootstrapDash "Corona" reference theme,
+   see docs/admin-panel/qor-design-tokens.md) — must stay in sync with
+   adminPanelConstants.ts. Tailwind's static compiler can't consume JS
+   constants, so these are intentionally duplicated. Change both together. */
+@theme {
+  --color-qor-sidebar: #191c24;
+  --color-qor-border: #2c2e33;
+  --color-qor-primary: #0090e7;
+  --color-qor-warning: #ffab00;
+  --color-qor-danger: #fc424a;
+  --color-qor-canvas: #000000;
+}
+
+@media (max-width: 992px) {
+  /* mirrors QOR_LAYOUT.mobileBreakpoint — a media query can't read the JS constant.
+     Selects on a real class (not [data-testid]) so this rule can't be broken by
+     renaming a test id, and resets both the inline width and margin-left that
+     AppShell.tsx sets for the desktop layout. */
+  .admin-body-wrapper {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+}
