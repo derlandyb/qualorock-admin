@@ -135,8 +135,9 @@ test.describe('super-admin route is unreachable for a non-super-admin session', 
     expect(response.status()).toBe(403)
   })
 
-  test('the in-app forbidden message renders instead of a raw error page', async ({ page }) => {
-    await page.goto('/forbidden')
+  test('navigating to the guarded super-admin route renders the in-app forbidden message, not raw JSON', async ({ page }) => {
+    await page.goto('/super-admin/organizers')
     await expect(page.getByTestId('forbidden-message')).toBeVisible()
+    await expect(page.getByTestId('super-admin-organizers')).toHaveCount(0)
   })
 })
