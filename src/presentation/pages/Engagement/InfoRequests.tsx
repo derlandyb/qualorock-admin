@@ -10,6 +10,7 @@ export function InfoRequests() {
   const [requests, setRequests] = useState<EventInfoRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [drafts, setDrafts] = useState<Record<number, string>>({})
+  const [respondError, setRespondError] = useState<string | null>(null)
 
   useEffect(() => {
     listEventInfoRequests(eventId)
@@ -22,10 +23,13 @@ export function InfoRequests() {
     const response = drafts[requestId]?.trim()
     if (!response) return
 
+    setRespondError(null)
     const updated = await respondToEventInfoRequest(requestId, response)
     if (updated) {
       setRequests((current) => current.map((item) => (item.id === requestId ? updated : item)))
       setDrafts((current) => ({ ...current, [requestId]: '' }))
+    } else {
+      setRespondError('Could not send this reply. Please try again.')
     }
   }
 
@@ -40,6 +44,12 @@ export function InfoRequests() {
   return (
     <div className="p-6">
       <h1 className="mb-4 text-lg font-semibold text-white">Info requests</h1>
+
+      {respondError ? (
+        <p role="alert" className="mb-4 text-sm text-qor-danger">
+          {respondError}
+        </p>
+      ) : null}
 
       <div className="flex flex-col gap-4">
         {requests.map((request) => (

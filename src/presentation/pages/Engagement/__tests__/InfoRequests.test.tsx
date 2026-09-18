@@ -69,6 +69,23 @@ describe('InfoRequests', () => {
     expect(screen.queryByLabelText('Reply')).not.toBeInTheDocument()
   })
 
+  it('GIVEN a reply submission fails WHEN the organizer submits a reply THEN it shows an error and keeps the reply form', async () => {
+    const request = makeRequest({ id: 4 })
+    listEventInfoRequestsMock.mockResolvedValue([request])
+    respondToEventInfoRequestMock.mockResolvedValue(null)
+
+    renderInfoRequests()
+
+    const input = await screen.findByLabelText('Reply')
+    fireEvent.change(input, { target: { value: 'Doors open at 8pm.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Reply' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/could not send this reply/i)
+    })
+    expect(screen.getByLabelText('Reply')).toBeInTheDocument()
+  })
+
   it('GIVEN a request already answered WHEN the screen loads THEN it shows the stored response instead of a reply form', async () => {
     listEventInfoRequestsMock.mockResolvedValue([
       makeRequest({ organizerResponse: 'Already answered.', respondedAt: '2026-09-17T00:00:00Z' }),
