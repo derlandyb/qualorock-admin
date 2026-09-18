@@ -5,6 +5,10 @@ export const QOR_COLORS = {
   warning: '#ffab00',
   danger: '#fc424a',
   canvas: '#000000',
+  success: '#00d25b',
+  purple: '#8f5fe8',
+  lightGray: '#e4eaec',
+  tableHeaderText: 'rgb(108, 114, 147)',
 } as const
 
 export const QOR_LAYOUT = {
@@ -28,3 +32,21 @@ export const ORGANIZER_APPROVAL_STATE = {
 
 export type OrganizerApprovalStateValue =
   (typeof ORGANIZER_APPROVAL_STATE)[keyof typeof ORGANIZER_APPROVAL_STATE]
+
+// Mirrors the backend's App\Domain\Enums\EventStatus values — never
+// hardcode these strings at call sites.
+export const EVENT_STATUS = {
+  draft: 'draft',
+  published: 'published',
+  cancelled: 'cancelled',
+  closed: 'closed',
+} as const
+
+export type EventStatusValue = (typeof EVENT_STATUS)[keyof typeof EVENT_STATUS]
+
+export const EVENT_STATUS_BADGE_COLOR: Record<EventStatusValue, string> = {
+  [EVENT_STATUS.draft]: QOR_COLORS.purple,
+  [EVENT_STATUS.published]: QOR_COLORS.success,
+  [EVENT_STATUS.cancelled]: QOR_COLORS.danger,
+  [EVENT_STATUS.closed]: QOR_COLORS.lightGray,
+}

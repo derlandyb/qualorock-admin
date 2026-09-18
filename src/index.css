@@ -11,6 +11,10 @@
   --color-qor-warning: #ffab00;
   --color-qor-danger: #fc424a;
   --color-qor-canvas: #000000;
+  --color-qor-success: #00d25b;
+  --color-qor-purple: #8f5fe8;
+  --color-qor-light-gray: #e4eaec;
+  --color-qor-table-header: rgb(108, 114, 147);
 }
 
 @media (max-width: 992px) {
