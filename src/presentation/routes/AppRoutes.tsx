@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@presentation/layouts/AppShell'
+import { Dashboard } from '@presentation/pages/Engagement/Dashboard'
+import { InfoRequests } from '@presentation/pages/Engagement/InfoRequests'
 import { EventForm } from '@presentation/pages/Events/EventForm'
 import { EventList } from '@presentation/pages/Events/EventList'
 import { Forbidden } from '@presentation/pages/Forbidden'
@@ -21,6 +23,8 @@ export function AppRoutes() {
         <Route path="events" element={<EventList />} />
         <Route path="events/new" element={<EventForm />} />
         <Route path="events/:id/edit" element={<EventForm />} />
+        <Route path="engagement" element={<Dashboard />} />
+        <Route path="events/:id/info-requests" element={<InfoRequests />} />
       </Route>
       <Route element={<RequireSuperAdmin />}>
         {/* Placeholder: the real pending-organizers list UI is a later phase.
