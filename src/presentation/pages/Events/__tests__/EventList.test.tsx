@@ -7,11 +7,13 @@ import type { Event } from '@domain/types/event'
 const listEventsMock = vi.fn()
 const duplicateEventMock = vi.fn()
 const transitionEventStatusMock = vi.fn()
+const deleteEventMock = vi.fn()
 
 vi.mock('@infrastructure/api/eventsApi', () => ({
   listEvents: (...args: unknown[]) => listEventsMock(...args),
   duplicateEvent: (...args: unknown[]) => duplicateEventMock(...args),
   transitionEventStatus: (...args: unknown[]) => transitionEventStatusMock(...args),
+  deleteEvent: (...args: unknown[]) => deleteEventMock(...args),
 }))
 
 function makeEvent(overrides: Partial<Event> = {}): Event {
@@ -56,6 +58,8 @@ describe('EventList', () => {
     listEventsMock.mockReset()
     duplicateEventMock.mockReset()
     transitionEventStatusMock.mockReset()
+    deleteEventMock.mockReset()
+    vi.restoreAllMocks()
   })
 
   it('GIVEN events of every status WHEN the list renders THEN each row shows its status badge', async () => {
@@ -164,5 +168,58 @@ describe('EventList', () => {
       expect(transitionEventStatusMock).toHaveBeenCalledWith(9, 'published')
     })
     expect(screen.getByText('Draft')).toBeInTheDocument()
+  })
+
+  it('GIVEN the organizer confirms deletion WHEN clicking Delete THEN the event is removed from the list', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    listEventsMock.mockResolvedValue([makeEvent({ id: 3, title: 'Doomed Event' })])
+    deleteEventMock.mockResolvedValue(true)
+
+    renderEventList()
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('event-row')).toHaveLength(1)
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(deleteEventMock).toHaveBeenCalledWith(3)
+    })
+    await waitFor(() => {
+      expect(screen.queryAllByTestId('event-row')).toHaveLength(0)
+    })
+  })
+
+  it('GIVEN the organizer cancels the confirmation WHEN clicking Delete THEN nothing is deleted', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    listEventsMock.mockResolvedValue([makeEvent({ id: 4 })])
+
+    renderEventList()
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('event-row')).toHaveLength(1)
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(deleteEventMock).not.toHaveBeenCalled()
+    expect(screen.getAllByTestId('event-row')).toHaveLength(1)
+  })
+
+  it('GIVEN deletion fails WHEN the organizer confirms Delete THEN it shows an error and keeps the row', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    listEventsMock.mockResolvedValue([makeEvent({ id: 5 })])
+    deleteEventMock.mockResolvedValue(false)
+
+    renderEventList()
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('event-row')).toHaveLength(1)
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/could not delete this event/i)
+    })
+    expect(screen.getAllByTestId('event-row')).toHaveLength(1)
   })
 })

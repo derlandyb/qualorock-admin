@@ -80,6 +80,49 @@ test.describe('admin-panel event management screen', () => {
     await expect(draftRow.locator('[data-testid="event-status-badge"]')).toHaveText('Draft')
   })
 
+  test('confirming the Delete action removes the row', async ({ page }) => {
+    await page.route('**/api/admin/v1/organizer/events/1', (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 204 })
+        : route.fallback(),
+    )
+    await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }))
+    page.on('dialog', (dialog) => dialog.accept())
+
+    await page.goto('/events')
+    const draftRow = page.getByTestId('event-row').filter({ hasText: 'Draft Night' })
+    await draftRow.getByRole('button', { name: 'Delete' }).click()
+
+    await expect(page.getByTestId('event-row').filter({ hasText: 'Draft Night' })).toHaveCount(0)
+  })
+
+  test('dismissing the Delete confirmation keeps the row', async ({ page }) => {
+    page.on('dialog', (dialog) => dialog.dismiss())
+
+    await page.goto('/events')
+    const draftRow = page.getByTestId('event-row').filter({ hasText: 'Draft Night' })
+    await draftRow.getByRole('button', { name: 'Delete' }).click()
+
+    await expect(page.getByTestId('event-row').filter({ hasText: 'Draft Night' })).toHaveCount(1)
+  })
+
+  test('a failed delete shows an error instead of silently doing nothing', async ({ page }) => {
+    await page.route('**/api/admin/v1/organizer/events/1', (route) =>
+      route.request().method() === 'DELETE'
+        ? route.fulfill({ status: 403 })
+        : route.fallback(),
+    )
+    await page.route('**/sanctum/csrf-cookie', (route) => route.fulfill({ status: 204 }))
+    page.on('dialog', (dialog) => dialog.accept())
+
+    await page.goto('/events')
+    const draftRow = page.getByTestId('event-row').filter({ hasText: 'Draft Night' })
+    await draftRow.getByRole('button', { name: 'Delete' }).click()
+
+    await expect(page.getByRole('alert')).toContainText(/could not delete this event/i)
+    await expect(draftRow).toBeVisible()
+  })
+
   test('new event form inputs and save button match the QOR design tokens', async ({ page }) => {
     await page.route('**/api/admin/v1/organizer/venue', (route) =>
       route.fulfill({ status: 404 }),

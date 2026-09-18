@@ -109,6 +109,23 @@ describe('EventForm', () => {
     })
   })
 
+  it('GIVEN an existing event being edited WHEN the organizer saves a changed field THEN it calls updateEvent with that event\'s id, not createEvent', async () => {
+    updateEventMock.mockResolvedValue({ ...event, title: 'Updated Title' })
+
+    renderEditForm()
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated Title' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => {
+      expect(updateEventMock).toHaveBeenCalledWith(1, expect.objectContaining({ title: 'Updated Title', venueId: 7 }))
+    })
+    expect(createEventMock).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(screen.getByTestId('event-list')).toBeInTheDocument()
+    })
+  })
+
   it('GIVEN a draft event being edited WHEN Publish hits the Basic-tier cap THEN it shows the upgrade message instead of a raw error', async () => {
     transitionEventStatusMock.mockResolvedValue({ ok: false, errorCode: 'upgrade_required' })
 

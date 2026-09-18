@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { duplicateEvent, listEvents, transitionEventStatus } from '@infrastructure/api/eventsApi'
+import { deleteEvent, duplicateEvent, listEvents, transitionEventStatus } from '@infrastructure/api/eventsApi'
 import { allowedEventStatusTransitions } from '@domain/types/event'
 import type { Event } from '@domain/types/event'
 import type { EventStatusValue } from '@domain/constants/adminPanelConstants'
@@ -19,6 +19,7 @@ export function EventList() {
   const navigate = useNavigate()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     listEvents()
@@ -40,6 +41,18 @@ export function EventList() {
     }
   }
 
+  async function handleDelete(event: Event): Promise<void> {
+    if (!window.confirm(`Delete "${event.title}"? This can't be undone.`)) return
+
+    setDeleteError(null)
+    const deleted = await deleteEvent(event.id)
+    if (deleted) {
+      setEvents((current) => current.filter((item) => item.id !== event.id))
+    } else {
+      setDeleteError('Could not delete this event. Please try again.')
+    }
+  }
+
   return (
     <div className="p-6">
       <div className="mb-4 flex items-center justify-between">
@@ -52,6 +65,12 @@ export function EventList() {
           New event
         </button>
       </div>
+
+      {deleteError ? (
+        <p role="alert" className="mb-4 text-sm text-qor-danger">
+          {deleteError}
+        </p>
+      ) : null}
 
       {loading ? (
         <p className="text-white">Loading…</p>
@@ -100,6 +119,13 @@ export function EventList() {
                         className="text-sm text-qor-primary"
                       >
                         Duplicate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(event)}
+                        className="text-sm text-qor-danger"
+                      >
+                        Delete
                       </button>
                     </div>
                   </td>
