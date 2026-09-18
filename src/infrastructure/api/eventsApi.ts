@@ -35,6 +35,12 @@ export async function updateEvent(id: number, payload: Partial<CreateEventPayloa
   return response.data?.data ?? null
 }
 
+export async function deleteEvent(id: number): Promise<boolean> {
+  await ensureCsrfCookie()
+  const response = await apiFetch<null>(`/api/admin/v1/organizer/events/${id}`, { method: 'DELETE' })
+  return response.ok
+}
+
 export async function duplicateEvent(id: number): Promise<Event | null> {
   await ensureCsrfCookie()
   const response = await apiFetch<EventBody>(`/api/admin/v1/organizer/events/${id}/duplicate`, {
