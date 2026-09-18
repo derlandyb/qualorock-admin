@@ -4,9 +4,9 @@ import { createEvent, transitionEventStatus, updateEvent } from '@infrastructure
 import { getVenue } from '@infrastructure/api/venueApi'
 import type { Event } from '@domain/types/event'
 import { EVENT_STATUS } from '@domain/constants/adminPanelConstants'
-
-const inputClassName = 'w-full rounded-[2px] border border-qor-border bg-qor-sidebar px-3 py-2 text-white'
-const labelClassName = 'text-sm font-medium text-white'
+import { FormField } from '@presentation/components/FormField'
+import { FormTextAreaField } from '@presentation/components/FormTextAreaField'
+import { formInputClassName, formLabelClassName } from '@presentation/components/formFieldStyles'
 
 interface EventFormFields {
   title: string
@@ -70,18 +70,29 @@ export function EventForm() {
 
   const [fields, setFields] = useState<EventFormFields>(editingEvent ? toFields(editingEvent) : EMPTY_FIELDS)
   const [venueId, setVenueId] = useState<number | null>(editingEvent?.venueId ?? null)
+  const [venueError, setVenueError] = useState<string | null>(null)
   const [upgradeRequired, setUpgradeRequired] = useState(false)
+  const [statusError, setStatusError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     // Skip the fetch entirely when this render is about to redirect away
     // (edit mode with no event in navigation state) - there is nothing to
     // show a venue for.
-    if (venueId === null && !(isEditMode && !editingEvent)) {
-      getVenue().then((venue) => {
-        if (venue) setVenueId(venue.id)
+    if (venueId !== null || (isEditMode && !editingEvent)) return
+
+    getVenue()
+      .then((venue) => {
+        if (venue) {
+          setVenueId(venue.id)
+        } else {
+          setVenueError('No venue found. Set up your venue before creating events.')
+        }
       })
-    }
+      .catch(() => {
+        setVenueError('Could not load your venue. Please try again.')
+      })
   }, [venueId, isEditMode, editingEvent])
 
   function updateField<K extends keyof EventFormFields>(key: K, value: EventFormFields[K]): void {
@@ -93,7 +104,9 @@ export function EventForm() {
     if (venueId === null) return
 
     setSaving(true)
+    setSaveError(null)
     setUpgradeRequired(false)
+    setStatusError(null)
 
     const payload = {
       venueId,
@@ -115,17 +128,36 @@ export function EventForm() {
 
     const saved = editingEvent ? await updateEvent(editingEvent.id, payload) : await createEvent(payload)
     setSaving(false)
-    if (saved) navigate('/events')
+    if (saved) {
+      navigate('/events')
+    } else {
+      setSaveError('Could not save this event. Please check the fields and try again.')
+    }
   }
 
   async function handlePublish(): Promise<void> {
     if (!editingEvent) return
+
+    setUpgradeRequired(false)
+    setStatusError(null)
+
     const result = await transitionEventStatus(editingEvent.id, EVENT_STATUS.published)
-    if (!result.ok && result.errorCode === 'upgrade_required') {
-      setUpgradeRequired(true)
+    if (result.ok) {
+      navigate('/events')
       return
     }
-    if (result.ok) navigate('/events')
+
+    switch (result.errorCode) {
+      case 'upgrade_required':
+        setUpgradeRequired(true)
+        break
+      case 'missing_required_fields':
+        setStatusError(`Fill in the following before publishing: ${(result.missingFields ?? []).join(', ')}`)
+        break
+      case 'invalid_transition':
+        setStatusError("This status change isn't allowed.")
+        break
+    }
   }
 
   // Edit mode with no event in navigation state means the organizer landed
@@ -139,6 +171,24 @@ export function EventForm() {
     <div className="p-6">
       <h1 className="mb-4 text-lg font-semibold text-white">{editingEvent ? 'Edit event' : 'New event'}</h1>
 
+      {venueError ? (
+        <p role="alert" className="mb-4 text-sm text-qor-danger">
+          {venueError}
+        </p>
+      ) : null}
+
+      {saveError ? (
+        <p role="alert" className="mb-4 text-sm text-qor-danger">
+          {saveError}
+        </p>
+      ) : null}
+
+      {statusError ? (
+        <p role="alert" className="mb-4 text-sm text-qor-danger">
+          {statusError}
+        </p>
+      ) : null}
+
       {upgradeRequired ? (
         <p
           data-testid="upgrade-required-message"
@@ -150,35 +200,35 @@ export function EventForm() {
       ) : null}
 
       <form onSubmit={handleSubmit} className="flex max-w-xl flex-col gap-4">
-        <Field label="Title" value={fields.title} onChange={(v) => updateField('title', v)} required />
-        <TextAreaField
+        <FormField label="Title" value={fields.title} onChange={(v) => updateField('title', v)} required />
+        <FormTextAreaField
           label="Description"
           value={fields.description}
           onChange={(v) => updateField('description', v)}
           required
         />
-        <Field
+        <FormField
           label="Date & time"
           type="datetime-local"
           value={fields.dateTime}
           onChange={(v) => updateField('dateTime', v)}
           required
         />
-        <Field label="Location" value={fields.location} onChange={(v) => updateField('location', v)} required />
-        <Field
+        <FormField label="Location" value={fields.location} onChange={(v) => updateField('location', v)} required />
+        <FormField
           label="Full address"
           value={fields.fullAddress}
           onChange={(v) => updateField('fullAddress', v)}
           required
         />
-        <Field
+        <FormField
           label="Featured image URL"
           type="url"
           value={fields.featuredImageUrl}
           onChange={(v) => updateField('featuredImageUrl', v)}
           required
         />
-        <Field
+        <FormField
           label="External ticket link"
           type="url"
           value={fields.externalTicketLink}
@@ -187,44 +237,48 @@ export function EventForm() {
         />
 
         <div className="flex flex-col gap-1">
-          <label className={labelClassName} htmlFor="priceType">
+          <label className={formLabelClassName} htmlFor="priceType">
             Price type
           </label>
           <select
             id="priceType"
             value={fields.priceType}
             onChange={(event) => updateField('priceType', event.target.value as 'free' | 'paid')}
-            className={inputClassName}
+            className={formInputClassName}
           >
             <option value="free">Free</option>
             <option value="paid">Paid</option>
           </select>
         </div>
 
-        <Field
+        <FormField
           label="Music category"
           value={fields.musicCategory}
           onChange={(v) => updateField('musicCategory', v)}
           required
         />
-        <Field
+        <FormField
           label="Capacity"
           type="number"
           value={fields.capacity}
           onChange={(v) => updateField('capacity', v)}
         />
-        <Field label="Age range" value={fields.ageRange} onChange={(v) => updateField('ageRange', v)} />
-        <TextAreaField
+        <FormField label="Age range" value={fields.ageRange} onChange={(v) => updateField('ageRange', v)} />
+        <FormTextAreaField
           label="Additional info"
           value={fields.additionalInfo}
           onChange={(v) => updateField('additionalInfo', v)}
         />
-        <TextAreaField
+        <FormTextAreaField
           label="Accessibility info"
           value={fields.accessibilityInfo}
           onChange={(v) => updateField('accessibilityInfo', v)}
         />
-        <TextAreaField label="Event rules" value={fields.eventRules} onChange={(v) => updateField('eventRules', v)} />
+        <FormTextAreaField
+          label="Event rules"
+          value={fields.eventRules}
+          onChange={(v) => updateField('eventRules', v)}
+        />
 
         <div className="flex gap-3">
           <button
@@ -245,51 +299,6 @@ export function EventForm() {
           ) : null}
         </div>
       </form>
-    </div>
-  )
-}
-
-interface FieldProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  required?: boolean
-}
-
-function Field({ label, value, onChange, type = 'text', required }: FieldProps) {
-  const id = label.toLowerCase().replace(/\s+/g, '-')
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className={labelClassName}>
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={inputClassName}
-        required={required}
-      />
-    </div>
-  )
-}
-
-function TextAreaField({ label, value, onChange, required }: FieldProps) {
-  const id = label.toLowerCase().replace(/\s+/g, '-')
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className={labelClassName}>
-        {label}
-      </label>
-      <textarea
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={inputClassName}
-        required={required}
-      />
     </div>
   )
 }

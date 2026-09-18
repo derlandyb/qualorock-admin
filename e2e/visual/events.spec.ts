@@ -74,9 +74,8 @@ test.describe('admin-panel event management screen', () => {
     await draftRow.getByRole('button', { name: 'Publish' }).click()
 
     // The list itself doesn't render the upgrade message (that's the form's
-    // job per T25's "Done when" bullet) - this asserts the row's status
-    // simply didn't change, i.e. no raw "upgrade_required" string leaked
-    // into the UI.
+    // job) - this asserts the row's status simply didn't change, i.e. no raw
+    // "upgrade_required" string leaked into the UI.
     await expect(draftRow.getByText('upgrade_required')).toHaveCount(0)
     await expect(draftRow.locator('[data-testid="event-status-badge"]')).toHaveText('Draft')
   })

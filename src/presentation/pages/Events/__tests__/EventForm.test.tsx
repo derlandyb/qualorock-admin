@@ -126,4 +126,79 @@ describe('EventForm', () => {
 
     expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument()
   })
+
+  it('GIVEN a draft event being edited WHEN Publish is rejected for missing fields THEN it lists the missing fields', async () => {
+    transitionEventStatusMock.mockResolvedValue({
+      ok: false,
+      errorCode: 'missing_required_fields',
+      missingFields: ['location', 'featuredImageUrl'],
+    })
+
+    renderEditForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('location, featuredImageUrl')
+    })
+  })
+
+  it('GIVEN a draft event being edited WHEN Publish hits an invalid transition THEN it shows a generic status-change message', async () => {
+    transitionEventStatusMock.mockResolvedValue({ ok: false, errorCode: 'invalid_transition' })
+
+    renderEditForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent("This status change isn't allowed.")
+    })
+  })
+
+  it('GIVEN the organizer has no venue set up WHEN the new-event form loads THEN it shows an explanatory message and disables Save', async () => {
+    getVenueMock.mockResolvedValue(null)
+
+    renderNewForm()
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/no venue found/i)
+    })
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+  })
+
+  it('GIVEN the venue fetch fails WHEN the new-event form loads THEN it shows an error instead of leaving Save silently disabled', async () => {
+    getVenueMock.mockRejectedValue(new TypeError('Failed to fetch'))
+
+    renderNewForm()
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/could not load your venue/i)
+    })
+  })
+
+  it('GIVEN saving fails WHEN the organizer submits the form THEN it shows an error instead of navigating silently', async () => {
+    getVenueMock.mockResolvedValue({ id: 42 })
+    createEventMock.mockResolvedValue(null)
+
+    renderNewForm()
+    await waitFor(() => expect(getVenueMock).toHaveBeenCalled())
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'New Event' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Desc' } })
+    fireEvent.change(screen.getByLabelText('Date & time'), { target: { value: '2026-10-01T20:00' } })
+    fireEvent.change(screen.getByLabelText('Location'), { target: { value: 'Downtown' } })
+    fireEvent.change(screen.getByLabelText('Full address'), { target: { value: '123 Main St' } })
+    fireEvent.change(screen.getByLabelText('Featured image URL'), {
+      target: { value: 'https://example.com/image.jpg' },
+    })
+    fireEvent.change(screen.getByLabelText('External ticket link'), {
+      target: { value: 'https://example.com/tickets' },
+    })
+    fireEvent.change(screen.getByLabelText('Music category'), { target: { value: 'Rock' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/could not save this event/i)
+    })
+    expect(screen.queryByTestId('event-list')).not.toBeInTheDocument()
+  })
 })

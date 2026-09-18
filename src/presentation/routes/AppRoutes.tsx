@@ -8,9 +8,10 @@ import { RequireSuperAdmin } from '@presentation/routes/RequireSuperAdmin'
 
 // SPEC_DEVIATION: the "/" route does not redirect to "/login" for an
 // unauthenticated visitor here, because no session-check endpoint exists yet
-// (routes/admin-panel.php has no GET /organizer/me). T25 is the first nested
-// screen that actually calls an organizer-guarded endpoint (listEvents) and
-// surfaces a 401/403 from the API itself rather than a route-level guard.
+// (routes/admin-panel.php has no GET /organizer/me). The events list below is
+// the first nested screen that actually calls an organizer-guarded endpoint
+// (listEvents) and surfaces a 401/403 from the API itself rather than a
+// route-level guard.
 export function AppRoutes() {
   return (
     <Routes>
